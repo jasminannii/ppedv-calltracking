@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wahlversuche Live</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11,11,11,0.10);
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --good-text: #006300;
+  --wash: rgba(11,11,11,0.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface-1: #1a1a19;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255,255,255,0.10);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --good-text: #0ca30c;
+    --wash: rgba(255,255,255,0.05);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff; --text-secondary: #c3c2b7;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --series-1: #3987e5; --series-2: #d95926; --good-text: #0ca30c; --wash: rgba(255,255,255,0.05);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--page); color: var(--text-primary);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 40px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-bottom: 16px; }
+h1 { font-size: 20px; margin: 0; font-weight: 650; }
+.sub { color: var(--text-muted); font-size: 12px; }
+.spacer { flex: 1; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface-1); }
+.seg button {
+  border: 0; background: none; color: var(--text-secondary); padding: 6px 12px; font: inherit; cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button:hover { background: var(--wash); }
+.seg button[aria-pressed="true"] { color: var(--text-primary); font-weight: 600; background: var(--wash); }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary);
+  border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; background: var(--surface-1); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); flex: none; }
+.dot.good { background: var(--good); } .dot.bad { background: var(--critical); } .dot.warn { background: var(--warning); }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.card h2 { font-size: 13px; font-weight: 600; margin: 0 0 12px; color: var(--text-secondary); }
+.grid { display: grid; gap: 12px; }
+.kpis { grid-template-columns: repeat(6, 1fr); margin-bottom: 12px; }
+@media (max-width: 1100px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+.kpi .label { font-size: 12px; color: var(--text-secondary); }
+.kpi .value { font-size: 30px; font-weight: 650; line-height: 1.15; margin-top: 4px; }
+.kpi .hint { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.row2 { grid-template-columns: 2fr 1fr; margin-bottom: 12px; }
+@media (max-width: 860px) { .row2 { grid-template-columns: 1fr; } }
+#live { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; min-height: 52px; }
+.livecall { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--wash); }
+.livecall .num { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.livecall .st { font-size: 12px; color: var(--text-secondary); }
+.livecall .t { font-size: 20px; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--series-1); animation: p 1.2s infinite; }
+.pulse.connected { background: var(--good); }
+@keyframes p { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+.empty { color: var(--text-muted); }
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--text-secondary); margin: -4px 0 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+svg text { fill: var(--text-muted); font-size: 11px; }
+.chartwrap { position: relative; }
+.tip { position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.12); white-space: nowrap; display: none; z-index: 5; }
+.tip b { display: block; margin-bottom: 4px; }
+.tip .r { display: flex; gap: 8px; align-items: center; color: var(--text-secondary); }
+.tip .r i { width: 8px; height: 8px; border-radius: 2px; }
+.tip .r span:last-child { margin-left: auto; padding-left: 12px; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.bars .b { display: grid; grid-template-columns: 175px 1fr 40px; gap: 10px; align-items: center; margin-bottom: 8px; font-size: 13px; }
+.bars .track { height: 14px; }
+.bars .fill { height: 100%; background: var(--series-1); border-radius: 0 4px 4px 0; min-width: 2px; }
+.bars .n { text-align: right; font-variant-numeric: tabular-nums; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--axis); position: sticky; top: 0; background: var(--surface-1); }
+td { padding: 6px 8px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+td.r, th.r { text-align: right; }
+.scroll { max-height: 440px; overflow: auto; }
+.tag { display: inline-flex; align-items: center; gap: 6px; }
+.row3 { grid-template-columns: 2fr 1fr; }
+@media (max-width: 860px) { .row3 { grid-template-columns: 1fr; } }
+.err { color: var(--critical); font-size: 12px; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Wahlversuche · Linkus Lite</h1>
+      <div class="sub" id="meta">verbinde …</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="seg" id="range" role="group" aria-label="Zeitraum">
+      <button data-v="today" aria-pressed="true">Heute</button>
+      <button data-v="yesterday">Gestern</button>
+      <button data-v="7d">7 Tage</button>
+      <button data-v="all">Alle</button>
+    </div>
+    <div class="seg" id="dir" role="group" aria-label="Richtung">
+      <button data-v="out" aria-pressed="true">Ausgehend</button>
+      <button data-v="in">Eingehend</button>
+      <button data-v="both">Alle</button>
+    </div>
+    <span class="pill" id="reg"><span class="dot"></span><span>SIP …</span></span>
+    <a class="pill" id="teamsync" hidden target="_blank" rel="noopener" style="text-decoration:none"></a>
+  </header>
+
+  <div class="grid kpis">
+    <div class="card kpi"><div class="label">Wahlversuche (brutto)</div><div class="value" id="k-total">–</div><div class="hint" id="k-total-h"></div></div>
+    <div class="card kpi"><div class="label">Erreicht (angenommen)</div><div class="value" id="k-ok">–</div><div class="hint" id="k-ok-h"></div></div>
+    <div class="card kpi"><div class="label">Technisch nicht erreichbar</div><div class="value" id="k-tech">–</div><div class="hint" id="k-tech-h"></div></div>
+    <div class="card kpi"><div class="label">Erreichungsquote</div><div class="value" id="k-rate">–</div><div class="hint">erreicht ÷ beendete Versuche</div></div>
+    <div class="card kpi"><div class="label">Gesprächszeit gesamt</div><div class="value" id="k-talk">–</div><div class="hint" id="k-talk-h"></div></div>
+    <div class="card kpi"><div class="label">Ø Klingelzeit</div><div class="value" id="k-ring">–</div><div class="hint">bis Annahme / Abbruch</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <h2>Jetzt live</h2>
+    <div id="live"><span class="empty">Kein aktiver Anruf</span></div>
+  </div>
+
+  <div class="grid row2">
+    <div class="card">
+      <h2 id="chart-title">Wahlversuche pro Stunde</h2>
+      <div class="legend"><span><i style="background:var(--series-1)"></i>Erreicht</span><span><i style="background:var(--series-2)"></i>Nicht erreicht</span></div>
+      <div class="chartwrap" id="chartwrap"><svg id="chart" width="100%" height="240"></svg><div class="tip" id="tip"></div></div>
+    </div>
+    <div class="card">
+      <h2>Ergebnisse</h2>
+      <div class="bars" id="outcomes"></div>
+    </div>
+  </div>
+
+  <div class="grid row3">
+    <div class="card">
+      <h2>Letzte Versuche</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Zeit</th><th>Nummer</th><th>Ergebnis</th><th class="r">Klingeln</th><th class="r">Gespräch</th><th class="r">SIP</th></tr></thead>
+          <tbody id="list"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Versuche pro Nummer</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Nummer</th><th class="r">Versuche</th><th class="r">Erreicht</th><th>Zuletzt</th></tr></thead>
+          <tbody id="pernum"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const OUT = {
+  ok:       { label: 'Erreicht',              status: 'good' },
+  busy:     { label: 'Besetzt',               status: 'warn' },
+  noanswer: { label: 'Nicht angenommen',      status: 'warn' },
+  cancel:   { label: 'Vor Annahme aufgelegt', status: 'warn' },
+  missed:   { label: 'Verpasst',              status: 'warn' },
+  unreach:  { label: 'Nicht erreichbar',      status: 'bad' },
+  invalid:  { label: 'Nummer ungültig',       status: 'bad' },
+  rejected: { label: 'Abgelehnt',             status: 'bad' },
+  failed:   { label: 'Fehlgeschlagen',        status: 'bad' },
+  sipfail:  { label: 'Nicht rausgegangen (SIP)', status: 'bad' },
+  live:     { label: 'läuft',                 status: 'live' },
+};
+const ORDER = ['ok','busy','noanswer','cancel','missed','unreach','invalid','rejected','failed','sipfail'];
+const TECH = ['unreach','invalid','rejected','failed','sipfail'];
+
+const st = { range: 'today', dir: 'out', data: null, offset: 0 };
+const $ = id => document.getElementById(id);
+const toDate = s => s ? new Date(s.replace(' ', 'T')) : null;
+const secs = (a, b) => (a && b) ? Math.max(0, (toDate(b) - toDate(a)) / 1000) : null;
+const pad = n => String(n).padStart(2, '0');
+function fmtDur(s) {
+  if (s == null) return '–';
+  s = Math.round(s);
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return h ? `${h}:${pad(m)}:${pad(x)}` : `${m}:${pad(x)}`;
+}
+const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const now = () => new Date(Date.now() + st.offset);
+
+// Klick ohne SIP-Anruf, der nach 60 s noch offen ist, gilt als gescheitert
+const stalePending = c => !c.end && c.state === 0 && (now() - toDate(c.start)) > 60e3;
+const isLive = c => !c.end && !stalePending(c) && (now() - toDate(c.start)) < 4 * 3600e3;
+
+function outcome(c) {
+  if (c.code === -1 || stalePending(c)) return 'sipfail';
+  if (!c.end) return 'live';
+  if (c.answer) return 'ok';
+  const k = c.code;
+  if (c.dir === 'in') return 'missed';
+  if (k === 486 || k === 600) return 'busy';
+  if (k === 487) return 'cancel';
+  // -2: Linkus neu gestartet/abgestuerzt, -3: kam nie ueber "klingelt" hinaus
+  if (k === -2 || k === -3) return c.ring ? 'cancel' : 'failed';
+  if ((k === 408 || k === 480) && c.ring) return 'noanswer';
+  if (k === 408 || k === 480 || k === 503 || k === 500 || k === 502 || k === 504) return 'unreach';
+  if (k === 404 || k === 484 || k === 604 || k === 410) return 'invalid';
+  if (k === 403 || k === 603) return 'rejected';
+  return 'failed';
+}
+
+function inRange(c) {
+  const d = toDate(c.start), n = now();
+  const today = dayKey(n);
+  if (st.range === 'today') return dayKey(d) === today;
+  if (st.range === 'yesterday') { const y = new Date(n); y.setDate(y.getDate() - 1); return dayKey(d) === dayKey(y); }
+  if (st.range === '7d') { const f = new Date(n); f.setHours(0,0,0,0); f.setDate(f.getDate() - 6); return d >= f; }
+  return true;
+}
+
+function filtered() {
+  if (!st.data) return [];
+  return st.data.calls.filter(c => (st.dir === 'both' || c.dir === st.dir) && inRange(c));
+}
+
+function statusDot(s) {
+  return `<span class="dot ${s === 'good' ? 'good' : s === 'bad' ? 'bad' : s === 'warn' ? 'warn' : ''}"></span>`;
+}
+
+function render() {
+  const d = st.data; if (!d) return;
+  const calls = filtered();
+  const done = calls.filter(c => !isLive(c));
+  const ok = done.filter(c => c.answer);
+  const talk = ok.reduce((a, c) => a + (secs(c.answer, c.end) || 0), 0);
+  const ringTimes = done.filter(c => c.ring).map(c => secs(c.ring, c.answer || c.end)).filter(x => x != null);
+  const uniq = new Set(calls.map(c => c.number)).size;
+
+  $('k-total').textContent = calls.length;
+  const sent = calls.filter(c => outcome(c) !== 'sipfail').length;
+  $('k-total-h').textContent = `jeder Klick · ${sent} tatsächlich rausgegangen · ${uniq} Nummern`;
+  $('k-ok').textContent = ok.length;
+  $('k-ok-h').textContent = `${done.length - ok.length} nicht erreicht`;
+  // technisch gescheiterte Wahlversuche (ungültig, nicht erreichbar, abgelehnt, SIP-Fehler)
+  const tech = done.filter(c => TECH.includes(outcome(c)));
+  const techSip = tech.filter(c => outcome(c) === 'sipfail').length;
+  $('k-tech').textContent = tech.length;
+  $('k-tech-h').textContent = calls.length
+    ? `${Math.round(tech.length / calls.length * 100)} % der Wahlversuche · ${new Set(tech.map(c => c.number)).size} Nummern · davon ${techSip} nicht rausgegangen (SIP)`
+    : '';
+  $('k-rate').textContent =done.length ? Math.round(ok.length / done.length * 100) + ' %' : '–';
+  $('k-talk').textContent = fmtDur(talk);
+  $('k-talk-h').textContent = ok.length ? `Ø ${fmtDur(talk / ok.length)} pro Gespräch` : '';
+  $('k-ring').textContent = ringTimes.length ? fmtDur(ringTimes.reduce((a, b) => a + b, 0) / ringTimes.length) : '–';
+
+  // SIP-Registrierung
+  const reg = d.reg;
+  const regOk = reg && reg.status === 200;
+  $('reg').innerHTML = reg
+    ? `${statusDot(regOk ? 'good' : 'bad')}<span>${regOk ? 'SIP registriert' : 'SIP nicht registriert (' + reg.status + ')'}</span>`
+    : `${statusDot('')}<span>SIP-Status unbekannt</span>`;
+  $('reg').title = reg ? 'Stand: ' + reg.ts : '';
+  // Team-Calltracking (Meldung an das Team-Dashboard)
+  const ts = d.team, tsEl = $('teamsync');
+  if (ts && ts.url) {
+    tsEl.hidden = false; tsEl.href = ts.url;
+    tsEl.innerHTML = ts.err ? `${statusDot('bad')}<span>Team: ${esc(ts.err)}</span>`
+      : ts.last ? `${statusDot('good')}<span>Team ${esc(ts.ext || '')} · ${esc(ts.last.slice(11, 16))}</span>`
+      : `${statusDot('')}<span>Team …</span>`;
+  } else tsEl.hidden = true;
+  $('meta').textContent = `Live aus ${d.logPath || '–'} · letzte Log-Zeile ${d.lastLogLine || '–'}`;
+
+  renderLive();
+  renderChart(calls);
+  renderOutcomes(done);
+  renderList(calls);
+  renderPerNumber(calls);
+}
+
+function renderLive() {
+  const d = st.data;
+  const n = now();
+  // laufende Anrufe (ohne Ende, nicht älter als 4 h) unabhängig vom Filter
+  const live = d.calls.filter(isLive);
+  if (!live.length) { $('live').innerHTML = '<span class="empty">Kein aktiver Anruf</span>'; return; }
+  $('live').innerHTML = live.map(c => {
+    const connected = !!c.answer;
+    const label = connected ? 'Verbunden' : c.ring ? 'Klingelt …' : c.dir === 'in' ? 'Eingehend …'
+      : c.sipErr && c.state === 0 ? 'Telefon nicht angemeldet – wartet …' : 'Wählt …';
+    const since = connected ? c.answer : c.start;
+    return `<div class="livecall"><span class="pulse ${connected ? 'connected' : ''}"></span>
+      <div><div class="num">${esc(c.number)}</div><div class="st">${c.dir === 'in' ? 'Eingehend' : 'Ausgehend'} · ${label}</div></div>
+      <div class="t" data-since="${since}">${fmtDur((n - toDate(since)) / 1000)}</div></div>`;
+  }).join('');
+}
+
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch])); }
+
+function buckets(calls) {
+  const n = now();
+  if (st.range === 'today' || st.range === 'yesterday') {
+    const b = Array.from({ length: 24 }, (_, h) => ({ key: h, label: pad(h), title: `${pad(h)}:00–${pad(h)}:59`, ok: 0, no: 0 }));
+    calls.forEach(c => { if (isLive(c)) return; const x = b[toDate(c.start).getHours()]; c.answer ? x.ok++ : x.no++; });
+    // auf den Arbeitsbereich zuschneiden (mind. 7–19 Uhr)
+    let lo = 7, hi = 19;
+    b.forEach((x, i) => { if (x.ok + x.no) { lo = Math.min(lo, i); hi = Math.max(hi, i); } });
+    if (st.range === 'today') hi = Math.max(hi, Math.min(23, n.getHours()));
+    return b.slice(lo, hi + 1);
+  }
+  const map = new Map();
+  let first;
+  if (st.range === '7d') { first = new Date(n); first.setHours(0,0,0,0); first.setDate(first.getDate() - 6); }
+  else {
+    const ds = calls.map(c => toDate(c.start)).sort((a, b) => a - b);
+    first = ds.length ? new Date(ds[0]) : new Date(n); first.setHours(0,0,0,0);
+  }
+  for (const d = new Date(first); d <= n; d.setDate(d.getDate() + 1)) {
+    const k = dayKey(d);
+    map.set(k, { key: k, label: `${pad(d.getDate())}.${pad(d.getMonth()+1)}.`, title: d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' }), ok: 0, no: 0 });
+  }
+  calls.forEach(c => { if (isLive(c)) return; const x = map.get(dayKey(toDate(c.start))); if (x) c.answer ? x.ok++ : x.no++; });
+  return [...map.values()];
+}
+
+function niceMax(v) {
+  if (v <= 4) return 4;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p;
+  return v;
+}
+
+function renderChart(calls) {
+  $('chart-title').textContent = (st.range === 'today' || st.range === 'yesterday') ? 'Wahlversuche pro Stunde' : 'Wahlversuche pro Tag';
+  const svg = $('chart');
+  const W = svg.clientWidth || 600, H = 240, ml = 32, mr = 8, mt = 8, mb = 24;
+  const data = buckets(calls);
+  const max = niceMax(Math.max(1, ...data.map(x => x.ok + x.no)));
+  const iw = W - ml - mr, ih = H - mt - mb;
+  const step = iw / Math.max(1, data.length);
+  const bw = Math.max(4, Math.min(36, step * 0.6));
+  const y = v => mt + ih - v / max * ih;
+  let s = '';
+  const ticks = max % 4 === 0 ? 4 : 5;   // ganzzahlige Achsenwerte
+  for (let i = 0; i <= ticks; i++) {
+    const v = max / ticks * i, yy = y(v);
+    s += `<line x1="${ml}" x2="${W - mr}" y1="${yy}" y2="${yy}" stroke="var(${i ? '--grid' : '--axis'})" stroke-width="1"/>`;
+    s += `<text x="${ml - 6}" y="${yy + 4}" text-anchor="end">${Math.round(v * 10) / 10}</text>`;
+  }
+  const labelEvery = Math.ceil(data.length / Math.max(1, Math.floor(iw / 34)));
+  data.forEach((x, i) => {
+    const cx = ml + step * i + step / 2, x0 = cx - bw / 2;
+    const hOk = x.ok / max * ih, hNo = x.no / max * ih;
+    const gap = (x.ok && x.no) ? 2 : 0;
+    // Erreicht unten (am Nullpunkt verankert), Nicht erreicht oben drauf
+    if (x.ok) s += barPath(x0, y(0) - hOk, bw, hOk, !x.no, 'var(--series-1)');
+    if (x.no) s += barPath(x0, y(0) - hOk - hNo, bw, Math.max(0, hNo - gap), true, 'var(--series-2)');
+    if (i % labelEvery === 0) s += `<text x="${cx}" y="${H - 6}" text-anchor="middle">${x.label}</text>`;
+    s += `<rect x="${ml + step * i}" y="${mt}" width="${step}" height="${ih}" fill="transparent" data-i="${i}" class="hit"/>`;
+  });
+  svg.innerHTML = s;
+  const tip = $('tip'), wrap = $('chartwrap');
+  svg.querySelectorAll('.hit').forEach(r => {
+    r.addEventListener('mouseenter', () => r.setAttribute('fill', 'var(--wash)'));
+    r.addEventListener('mousemove', e => {
+      const x = data[+r.dataset.i], tot = x.ok + x.no;
+      tip.innerHTML = `<b>${x.title}</b>
+        <div class="r"><i style="background:var(--series-1)"></i><span>Erreicht</span><span>${x.ok}</span></div>
+        <div class="r"><i style="background:var(--series-2)"></i><span>Nicht erreicht</span><span>${x.no}</span></div>
+        <div class="r"><i></i><span>Quote</span><span>${tot ? Math.round(x.ok / tot * 100) + ' %' : '–'}</span></div>`;
+      tip.style.display = 'block';
+      const b = wrap.getBoundingClientRect();
+      let left = e.clientX - b.left + 12;
+      if (left + tip.offsetWidth > b.width) left = e.clientX - b.left - tip.offsetWidth - 12;
+      tip.style.left = left + 'px'; tip.style.top = Math.max(0, e.clientY - b.top - 20) + 'px';
+    });
+    r.addEventListener('mouseleave', () => { tip.style.display = 'none'; r.setAttribute('fill', 'transparent'); });
+  });
+}
+
+function barPath(x, y, w, h, roundTop, fill) {
+  if (h <= 0) return '';
+  const r = roundTop ? Math.min(4, h, w / 2) : 0;
+  return `<path d="M${x},${y + h} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h} Z" fill="${fill}"/>`;
+}
+
+function renderOutcomes(done) {
+  const cnt = {}; done.forEach(c => { const o = outcome(c); cnt[o] = (cnt[o] || 0) + 1; });
+  const rows = ORDER.filter(k => cnt[k]);
+  if (!rows.length) { $('outcomes').innerHTML = '<span class="empty">Noch keine Versuche im Zeitraum</span>'; return; }
+  const max = Math.max(...rows.map(k => cnt[k]));
+  $('outcomes').innerHTML = rows.map(k => `<div class="b" title="${OUT[k].label}: ${cnt[k]} (${Math.round(cnt[k] / done.length * 100)} %)">
+    <span class="tag">${statusDot(OUT[k].status)}${OUT[k].label}</span>
+    <div class="track"><div class="fill" style="width:${cnt[k] / max * 100}%"></div></div>
+    <span class="n">${cnt[k]}</span></div>`).join('');
+}
+
+function renderList(calls) {
+  const rows = calls.slice().reverse().slice(0, 300);
+  if (!rows.length) { $('list').innerHTML = '<tr><td colspan="6" class="empty">Keine Versuche im Zeitraum</td></tr>'; return; }
+  const multiDay = st.range === '7d' || st.range === 'all';
+  $('list').innerHTML = rows.map(c => {
+    const o = outcome(c), d = toDate(c.start);
+    const t = (multiDay ? `${pad(d.getDate())}.${pad(d.getMonth()+1)}. ` : '') + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    const ring = c.ring ? secs(c.ring, c.answer || c.end || null) : null;
+    const talk = c.answer ? secs(c.answer, c.end) : null;
+    return `<tr><td>${t}</td><td>${c.dir === 'in' ? '↙ ' : ''}${esc(c.number)}</td>
+      <td><span class="tag">${statusDot(OUT[o].status)}${OUT[o].label}</span></td>
+      <td class="r">${fmtDur(ring)}</td><td class="r">${fmtDur(talk)}</td><td class="r">${c.code > 0 ? c.code : ''}</td></tr>`;
+  }).join('');
+}
+
+function renderPerNumber(calls) {
+  const m = new Map();
+  calls.forEach(c => {
+    const x = m.get(c.number) || { n: 0, ok: 0, last: c.start };
+    x.n++; if (c.answer) x.ok++; if (c.start > x.last) x.last = c.start;
+    m.set(c.number, x);
+  });
+  const rows = [...m.entries()].sort((a, b) => b[1].n - a[1].n || (b[1].last > a[1].last ? 1 : -1)).slice(0, 200);
+  if (!rows.length) { $('pernum').innerHTML = '<tr><td colspan="4" class="empty">–</td></tr>'; return; }
+  $('pernum').innerHTML = rows.map(([num, x]) => {
+    const d = toDate(x.last);
+    return `<tr><td>${esc(num)}</td><td class="r">${x.n}</td><td class="r">${x.ok}</td><td>${pad(d.getDate())}.${pad(d.getMonth()+1)}. ${pad(d.getHours())}:${pad(d.getMinutes())}</td></tr>`;
+  }).join('');
+}
+
+async function poll() {
+  if (location.protocol === 'file:') {
+    $('meta').innerHTML = '<span class="err">Diese Datei bitte nicht direkt öffnen – starte „Dashboard starten.cmd“, dann öffnet sich das Dashboard unter http://localhost:8765 automatisch.</span>';
+    return;
+  }
+  try {
+    const r = await fetch('/api/state', { cache: 'no-store' });
+    st.data = await r.json();
+    st.offset = toDate(st.data.now) - Date.now();
+    render();
+  } catch (e) {
+    $('meta').innerHTML = '<span class="err">Keine Verbindung zum Dashboard-Server – läuft server.ps1 noch?</span>';
+  }
+  setTimeout(poll, 1000);
+}
+
+function bindSeg(id, key) {
+  $(id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    st[key] = b.dataset.v;
+    $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    try { localStorage.setItem('lk-' + key, st[key]); } catch {}
+    render();
+  });
+  try {
+    const v = localStorage.getItem('lk-' + key);
+    const b = v && $(id).querySelector(`button[data-v="${v}"]`);
+    if (b) { st[key] = v; $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); }
+  } catch {}
+}
+bindSeg('range', 'range'); bindSeg('dir', 'dir');
+window.addEventListener('resize', () => render());
+// Live-Timer jede Sekunde weiterzählen, auch zwischen den Abfragen
+setInterval(() => {
+  const n = now();
+  document.querySelectorAll('#live .t[data-since]').forEach(el => el.textContent = fmtDur((n - toDate(el.dataset.since)) / 1000));
+}, 250);
+poll();
+</script>
+</body>
+</html>

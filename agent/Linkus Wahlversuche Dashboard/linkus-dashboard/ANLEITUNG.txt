@@ -1,0 +1,36 @@
+PPEDV CALLTRACKING - Linkus-Agent (ca. 2 Minuten)
+==================================================
+
+Was es macht
+------------
+Liest die Linkus-Lite-Anrufe DIESES PCs mit und meldet sie an das
+Team-Dashboard: https://ppedv-calltracking.vercel.app
+Gesendet werden nur Anrufdaten (Zeit, Nummer, Ergebnis, Dauer) -
+keine Linkus-Logs, keine Passwoerter.
+
+Voraussetzungen
+---------------
+- Windows 10/11, Linkus Lite installiert und angemeldet
+- Team-Code (bekommst du von Jasmin)
+
+1. Installieren
+---------------
+1. ZIP rechtsklicken -> "Alle extrahieren..." -> Ziel: DESKTOP.
+   (Es entsteht "Linkus Wahlversuche Dashboard\linkus-dashboard".
+    Eine aeltere Version einfach ueberschreiben - Historie bleibt.)
+2. Im Ordner "linkus-dashboard" Doppelklick auf "Installieren.cmd".
+   Falls Windows warnt: "Weitere Informationen" -> "Trotzdem ausfuehren".
+3. Team-Code eingeben -> fertig. Der Agent laeuft unsichtbar und
+   startet automatisch mit Windows.
+
+Eigenes Dashboard & Powerdialer
+-------------------------------
+- Eigene Live-Ansicht: http://localhost:8765  (oder "Dashboard starten.cmd")
+- Oben rechts zeigt "Team 30 · 10:42", wann zuletzt gemeldet wurde.
+- Powerdialer wie bisher: http://localhost:8765/powerdialer
+
+Probleme
+--------
+- "Team-Code falsch": Installieren.cmd erneut ausfuehren.
+- "Nebenstelle unbekannt": in Linkus einmal ab- und wieder anmelden.
+- Abschalten: PowerShell -> installieren.ps1 -Entfernen

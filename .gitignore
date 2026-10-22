@@ -1,0 +1,10 @@
+# Anrufdaten, Linkus-Logs und lokale Einstellungen nie committen
+*.tsv
+*.csv
+*.log
+linkus-log-archiv/
+einstellungen.json
+sync-stand.json
+node_modules/
+.vercel/
+zugang.txt

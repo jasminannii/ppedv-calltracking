@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>ppedv Calltracking</title>
+<link rel="icon" href="/ppedv_Logo.png">
+<link rel="stylesheet" href="/vendor/fonts.css">
+<style>
+:root{
+  color-scheme:light;
+  --blue:#2E4879; --orange:#EA8F13;
+  --paper:#EFF1F5; --surface:#FFFFFF; --surface-2:#F5F7FA; --surface-3:#E5E9F0;
+  --ink:#141A24; --ink-2:#465268; --ink-3:#78849A;
+  --line:#D5DCE7; --line-2:#BCC6D6;
+  --accent-soft:#FDF1DD; --accent-ink:#8A5A08;
+  --s-ok:#2E4879; --s-no:#EA8F13;
+  --good:#1E7A45; --warn:#C98A0B; --bad:#B3261E;
+  --shadow:0 1px 2px rgba(20,26,36,.05), 0 10px 30px -14px rgba(46,72,121,.28);
+  --sans:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --paper:#0D1117; --surface:#151B24; --surface-2:#1A212B; --surface-3:#232C39;
+  --ink:#E8ECF3; --ink-2:#A3AEC1; --ink-3:#78849A;
+  --line:#28313E; --line-2:#3A4657; --accent-soft:#2C2110; --accent-ink:#EA8F13;
+  --s-ok:#6997CB; --s-no:#EA8F13; --good:#3DBE74; --warn:#E3A92B; --bad:#E5645A;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -14px rgba(0,0,0,.8);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0D1117; --surface:#151B24; --surface-2:#1A212B; --surface-3:#232C39;
+  --ink:#E8ECF3; --ink-2:#A3AEC1; --ink-3:#78849A;
+  --line:#28313E; --line-2:#3A4657; --accent-soft:#2C2110; --accent-ink:#EA8F13;
+  --s-ok:#6997CB; --s-no:#EA8F13; --good:#3DBE74; --warn:#E3A92B; --bad:#E5645A;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -14px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased}
+.top{background:var(--blue); color:#fff}
+.top .in{max-width:1320px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.top img{height:30px; background:#fff; border-radius:6px; padding:3px 6px}
+.top h1{font-size:17px; font-weight:600; margin:0; letter-spacing:.01em}
+.top h1 b{color:var(--orange); font-weight:600}
+.top .sp{flex:1}
+.top a, .top button.link{color:#D6DEEC; font:inherit; font-size:13px; text-decoration:none; background:none; border:0; cursor:pointer; padding:4px 6px}
+.top a:hover, .top button.link:hover{color:#fff}
+.wrap{max-width:1320px; margin:0 auto; padding:16px 20px 48px}
+.bar{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin-bottom:14px}
+.seg{display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--surface)}
+.seg button{border:0; background:none; color:var(--ink-2); padding:7px 13px; font:inherit; font-size:13px; cursor:pointer}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button:hover{background:var(--surface-2)}
+.seg button[aria-pressed="true"]{color:var(--ink); font-weight:600; background:var(--accent-soft); box-shadow:inset 0 -2px 0 var(--orange)}
+.btn{border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:9px; padding:7px 13px; font:inherit; font-size:13px; cursor:pointer}
+.btn:hover{border-color:var(--orange)}
+.btn.warm{background:var(--orange); border-color:var(--orange); color:#3D2402; font-weight:600}
+.stand{font-size:12px; color:var(--ink-3); font-family:var(--mono)}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; box-shadow:var(--shadow)}
+.card h2{font-size:12px; font-weight:600; margin:0 0 12px; color:var(--ink-2); text-transform:uppercase; letter-spacing:.06em}
+.grid{display:grid; gap:12px}
+/* Team-Karten */
+.team{grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); margin-bottom:12px}
+.pers{cursor:pointer; text-align:left; font:inherit; color:inherit; position:relative}
+.pers:hover{border-color:var(--line-2)}
+.pers[aria-pressed="true"]{border-color:var(--orange); box-shadow:0 0 0 1px var(--orange), var(--shadow)}
+.pers .kopf{display:flex; align-items:center; gap:8px}
+.pers .nm{font-weight:600; font-size:15px}
+.pers .nr{font-family:var(--mono); font-size:11px; color:var(--ink-3)}
+.pers .st{font-size:12px; color:var(--ink-2); margin:2px 0 10px; min-height:18px}
+.pers .zahlen{display:grid; grid-template-columns:repeat(3,1fr); gap:6px}
+.pers .z b{display:block; font-size:22px; font-weight:600; line-height:1.1; font-variant-numeric:tabular-nums}
+.pers .z span{font-size:11px; color:var(--ink-3)}
+.dot{width:9px; height:9px; border-radius:50%; background:var(--line-2); flex:none; display:inline-block}
+.dot.good{background:var(--good)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+.dot.live{background:var(--good); animation:p 1.2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+/* KPIs */
+.kpis{grid-template-columns:repeat(6,1fr); margin-bottom:12px}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:560px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi .label{font-size:12px; color:var(--ink-2)}
+.kpi .value{font-size:28px; font-weight:600; line-height:1.15; margin-top:4px; font-variant-numeric:tabular-nums}
+.kpi .hint{font-size:12px; color:var(--ink-3); margin-top:2px}
+.row2{grid-template-columns:2fr 1fr; margin-bottom:12px}
+@media (max-width:900px){.row2{grid-template-columns:1fr}}
+.legend{display:flex; gap:16px; font-size:12px; color:var(--ink-2); margin:-4px 0 8px}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px}
+svg text{fill:var(--ink-3); font-size:11px; font-family:var(--sans)}
+.chartwrap{position:relative}
+.tip{position:absolute; pointer-events:none; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12px; box-shadow:0 4px 16px rgba(0,0,0,.14); white-space:nowrap; display:none; z-index:5}
+.tip b{display:block; margin-bottom:4px}
+.tip .r{display:flex; gap:8px; align-items:center; color:var(--ink-2)}
+.tip .r i{width:8px; height:8px; border-radius:2px}
+.tip .r span:last-child{margin-left:auto; padding-left:12px; color:var(--ink); font-variant-numeric:tabular-nums}
+.bars .b{display:grid; grid-template-columns:165px 1fr 40px; gap:10px; align-items:center; margin-bottom:8px; font-size:13px}
+.bars .track{height:14px}
+.bars .fill{height:100%; background:var(--s-ok); border-radius:0 4px 4px 0; min-width:2px}
+.bars .n{text-align:right; font-variant-numeric:tabular-nums}
+table{width:100%; border-collapse:collapse; font-size:13px}
+th{text-align:left; font-weight:600; color:var(--ink-2); font-size:12px; padding:6px 8px; border-bottom:1px solid var(--line-2); position:sticky; top:0; background:var(--surface)}
+td{padding:6px 8px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums}
+td.r, th.r{text-align:right}
+td.mono{font-family:var(--mono); font-size:12px}
+.scroll{max-height:460px; overflow:auto}
+.tag{display:inline-flex; align-items:center; gap:6px}
+.empty{color:var(--ink-3)}
+.err{color:var(--bad)}
+/* Anmeldung */
+.login{max-width:380px; margin:12vh auto; padding:0 16px}
+.login .card{padding:24px}
+.login h2{font-size:18px; text-transform:none; letter-spacing:0; color:var(--ink); margin:0 0 4px}
+.login p{color:var(--ink-2); margin:0 0 16px; font-size:13px}
+.login input{width:100%; padding:10px 12px; border:1px solid var(--line-2); border-radius:9px; font:inherit; background:var(--surface-2); color:var(--ink); margin-bottom:10px}
+.login input:focus{outline:2px solid var(--orange); outline-offset:-1px}
+.login label{display:flex; gap:8px; align-items:center; font-size:13px; color:var(--ink-2); margin-bottom:14px}
+.login label input{width:auto; margin:0}
+.login .btn{width:100%; padding:10px}
+.login .msg{min-height:20px; font-size:13px; margin-top:10px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <img src="/ppedv_Logo.png" alt="ppedv">
+  <h1>Calltracking <b>·</b> Linkus</h1>
+  <span class="sp"></span>
+  <a href="/einrichtung/">Einrichtung</a>
+  <button class="link" id="abmelden" hidden>Abmelden</button>
+</div></div>
+
+<!-- Anmeldung / Ersteinrichtung -->
+<div class="login" id="login" hidden>
+  <form class="card" id="loginForm">
+    <h2 id="lTitel">Anmelden</h2>
+    <p id="lText">Team-Code eingeben.</p>
+    <input type="password" id="lCode" autocomplete="current-password" placeholder="Team-Code" required minlength="6">
+    <input type="password" id="lCode2" autocomplete="new-password" placeholder="Team-Code wiederholen" hidden>
+    <label><input type="checkbox" id="lMerken" checked> Auf diesem Gerät merken</label>
+    <button class="btn warm" type="submit" id="lBtn">Weiter</button>
+    <div class="msg" id="lMsg"></div>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="bar">
+    <div class="seg" id="range" role="group" aria-label="Zeitraum">
+      <button data-v="today" aria-pressed="true">Heute</button>
+      <button data-v="yesterday">Gestern</button>
+      <button data-v="7d">7 Tage</button>
+      <button data-v="30d">30 Tage</button>
+    </div>
+    <div class="seg" id="dir" role="group" aria-label="Richtung">
+      <button data-v="out" aria-pressed="true">Ausgehend</button>
+      <button data-v="both">Alle</button>
+    </div>
+    <span class="sp" style="flex:1"></span>
+    <span class="stand" id="stand"></span>
+    <button class="btn" id="csv" title="Anrufe im Zeitraum als CSV (Excel)">CSV</button>
+  </div>
+
+  <div class="grid team" id="team"></div>
+
+  <div class="grid kpis">
+    <div class="card kpi"><div class="label">Wahlversuche</div><div class="value" id="k-total">–</div><div class="hint" id="k-total-h"></div></div>
+    <div class="card kpi"><div class="label">Erreicht</div><div class="value" id="k-ok">–</div><div class="hint" id="k-ok-h"></div></div>
+    <div class="card kpi"><div class="label">Erreichungsquote</div><div class="value" id="k-rate">–</div><div class="hint">erreicht ÷ beendete Versuche</div></div>
+    <div class="card kpi"><div class="label">Gesprächszeit</div><div class="value" id="k-talk">–</div><div class="hint" id="k-talk-h"></div></div>
+    <div class="card kpi"><div class="label">Gespräche ≥ 1 min</div><div class="value" id="k-real">–</div><div class="hint" id="k-real-h"></div></div>
+    <div class="card kpi"><div class="label">Technisch nicht erreichbar</div><div class="value" id="k-tech">–</div><div class="hint" id="k-tech-h"></div></div>
+  </div>
+
+  <div class="grid row2">
+    <div class="card">
+      <h2 id="chart-title">Wahlversuche pro Stunde</h2>
+      <div class="legend"><span><i style="background:var(--s-ok)"></i>Erreicht</span><span><i style="background:var(--s-no)"></i>Nicht erreicht</span></div>
+      <div class="chartwrap" id="chartwrap"><svg id="chart" width="100%" height="240"></svg><div class="tip" id="tip"></div></div>
+    </div>
+    <div class="card">
+      <h2>Ergebnisse</h2>
+      <div class="bars" id="outcomes"></div>
+    </div>
+  </div>
+
+  <div class="grid row2">
+    <div class="card">
+      <h2>Letzte Versuche</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Zeit</th><th>Wer</th><th>Nummer</th><th>Ergebnis</th><th class="r">Klingeln</th><th class="r">Gespräch</th></tr></thead>
+          <tbody id="list"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Mehrfach versucht</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Nummer</th><th class="r">Versuche</th><th class="r">Erreicht</th><th>Zuletzt</th></tr></thead>
+          <tbody id="pernum"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Ergebnis eines Anrufs (gleiche Logik wie das lokale Dashboard) ---------- */
+const OUT = {
+  ok:       { label: 'Erreicht',              status: 'good' },
+  busy:     { label: 'Besetzt',               status: 'warn' },
+  noanswer: { label: 'Nicht angenommen',      status: 'warn' },
+  cancel:   { label: 'Vor Annahme aufgelegt', status: 'warn' },
+  missed:   { label: 'Verpasst (eingehend)',  status: 'warn' },
+  unreach:  { label: 'Nicht erreichbar',      status: 'bad' },
+  invalid:  { label: 'Nummer ungültig',       status: 'bad' },
+  rejected: { label: 'Abgelehnt',             status: 'bad' },
+  failed:   { label: 'Fehlgeschlagen',        status: 'bad' },
+  sipfail:  { label: 'Nicht rausgegangen',    status: 'bad' },
+  live:     { label: 'läuft',                 status: 'live' },
+};
+const ORDER = ['ok','busy','noanswer','cancel','missed','unreach','invalid','rejected','failed','sipfail'];
+const TECH = ['unreach','invalid','rejected','failed','sipfail'];
+
+const st = { range: 'today', dir: 'out', who: 'team', data: null, calls: [], code: '', timer: null };
+const $ = id => document.getElementById(id);
+const toDate = s => s ? new Date(s.replace(' ', 'T')) : null;
+const secs = (a, b) => (a && b) ? Math.max(0, (toDate(b) - toDate(a)) / 1000) : null;
+const pad = n => String(n).padStart(2, '0');
+const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+function fmtDur(s) {
+  if (s == null) return '–';
+  s = Math.round(s);
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return h ? `${h}:${pad(m)}:${pad(x)}` : `${m}:${pad(x)}`;
+}
+const hhmm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+const stalePending = c => !c.end && c.state === 0 && (Date.now() - toDate(c.start)) > 60e3;
+const isLive = c => !c.end && !stalePending(c) && (Date.now() - toDate(c.start)) < 4 * 3600e3;
+function outcome(c) {
+  if (c.code === -1 || stalePending(c)) return 'sipfail';
+  if (!c.end) return isLive(c) ? 'live' : 'failed';
+  if (c.answer) return 'ok';
+  const k = c.code;
+  if (c.dir === 'in') return 'missed';
+  if (k === 486 || k === 600) return 'busy';
+  if (k === 487) return 'cancel';
+  if (k === -2 || k === -3) return c.ring ? 'cancel' : 'failed';
+  if ((k === 408 || k === 480) && c.ring) return 'noanswer';
+  if ([408, 480, 500, 502, 503, 504].includes(k)) return 'unreach';
+  if ([404, 410, 484, 604].includes(k)) return 'invalid';
+  if (k === 403 || k === 603) return 'rejected';
+  return 'failed';
+}
+const dotHtml = s => `<span class="dot ${s === 'good' ? 'good' : s === 'bad' ? 'bad' : s === 'warn' ? 'warn' : s === 'live' ? 'live' : ''}"></span>`;
+
+/* ---------- Anmeldung ---------- */
+function gemerkt() { try { return localStorage.getItem('ct-code') || sessionStorage.getItem('ct-code') || ''; } catch { return ''; } }
+function merken(code, dauerhaft) {
+  try { (dauerhaft ? localStorage : sessionStorage).setItem('ct-code', code); } catch {}
+}
+function vergessen() { try { localStorage.removeItem('ct-code'); sessionStorage.removeItem('ct-code'); } catch {} }
+
+async function api(a, opt = {}) {
+  const r = await fetch('/api/ct?a=' + a + (opt.qs || ''), {
+    method: opt.body ? 'POST' : 'GET', cache: 'no-store',
+    headers: Object.assign({ 'x-team-code': opt.code ?? st.code }, opt.body ? { 'Content-Type': 'application/json' } : {}),
+    body: opt.body ? JSON.stringify(opt.body) : undefined
+  });
+  let j = {}; try { j = await r.json(); } catch {}
+  return { status: r.status, ...j };
+}
+
+let einrichten = false;
+function zeigeLogin(neu, msg) {
+  einrichten = neu;
+  $('app').hidden = true; $('abmelden').hidden = true; $('login').hidden = false;
+  $('lTitel').textContent = neu ? 'Ersteinrichtung' : 'Anmelden';
+  $('lText').textContent = neu ? 'Team-Code festlegen (mind. 6 Zeichen). Er gilt für dieses Dashboard und für die Linkus-Agents auf den PCs.' : 'Team-Code eingeben.';
+  $('lCode2').hidden = !neu; $('lCode2').required = neu;
+  $('lMsg').innerHTML = msg ? `<span class="err">${esc(msg)}</span>` : '';
+  $('lCode').focus();
+}
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const code = $('lCode').value;
+  if (einrichten && code !== $('lCode2').value) { $('lMsg').innerHTML = '<span class="err">Die beiden Eingaben sind nicht gleich.</span>'; return; }
+  $('lBtn').disabled = true;
+  try {
+    const r = await api(einrichten ? 'einrichten' : 'pruefen', einrichten ? { code, body: { code } } : { code });
+    if (!r.ok) { $('lMsg').innerHTML = `<span class="err">${esc(r.error || 'Fehler')}</span>`; return; }
+    st.code = code; merken(code, $('lMerken').checked);
+    $('lCode').value = $('lCode2').value = '';
+    start();
+  } catch { $('lMsg').innerHTML = '<span class="err">Keine Verbindung.</span>'; }
+  finally { $('lBtn').disabled = false; }
+});
+$('abmelden').addEventListener('click', () => { vergessen(); st.code = ''; clearTimeout(st.timer); zeigeLogin(false); });
+
+async function init() {
+  let s;
+  try { s = await api('status'); } catch { zeigeLogin(false, 'Keine Verbindung zum Server.'); return; }
+  if (!s.eingerichtet) { zeigeLogin(true); return; }
+  st.code = gemerkt();
+  if (!st.code) { zeigeLogin(false); return; }
+  start();
+}
+function start() {
+  $('login').hidden = true; $('app').hidden = false; $('abmelden').hidden = false;
+  laden();
+}
+
+/* ---------- Daten ---------- */
+function zeitraum() {
+  const n = new Date(), v = new Date(n), b = new Date(n);
+  if (st.range === 'yesterday') { v.setDate(v.getDate() - 1); b.setDate(b.getDate() - 1); }
+  if (st.range === '7d') v.setDate(v.getDate() - 6);
+  if (st.range === '30d') v.setDate(v.getDate() - 29);
+  return { von: dayKey(v), bis: dayKey(b) };
+}
+async function laden() {
+  clearTimeout(st.timer);
+  const { von, bis } = zeitraum();
+  try {
+    const r = await api('daten', { qs: `&von=${von}&bis=${bis}` });
+    if (r.status === 401) { vergessen(); zeigeLogin(false, 'Team-Code falsch oder geändert.'); return; }
+    if (!r.ok) throw new Error(r.error);
+    st.data = r;
+    st.calls = [];
+    Object.entries(r.tage || {}).forEach(([tag, perExt]) => Object.entries(perExt).forEach(([ext, d]) =>
+      (d.calls || []).forEach(c => st.calls.push(Object.assign({ ext }, c)))));
+    st.calls.sort((a, b) => a.start < b.start ? -1 : 1);
+    $('stand').textContent = 'Stand ' + hhmm(new Date());
+    render();
+  } catch (e) {
+    $('stand').innerHTML = '<span class="err">Laden fehlgeschlagen – neuer Versuch …</span>';
+  }
+  /* „Heute“ aktuell halten; andere Zeiträume ändern sich kaum */
+  const wann = st.range === 'today' || st.range === '7d' || st.range === '30d' ? 60e3 : 300e3;
+  st.timer = setTimeout(() => document.hidden ? (st.wartet = true) : laden(), wann);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && st.wartet) { st.wartet = false; laden(); } });
+
+const name = ext => (st.data.team.find(t => t.ext === ext) || { name: 'NSt ' + ext }).name;
+const dirOk = c => st.dir === 'both' || c.dir === 'out';
+const fuer = who => st.calls.filter(c => dirOk(c) && (who === 'team' || c.ext === who));
+
+function stats(calls) {
+  const done = calls.filter(c => outcome(c) !== 'live');
+  const ok = done.filter(c => c.answer);
+  const talk = ok.reduce((a, c) => a + (secs(c.answer, c.end) || 0), 0);
+  const real = ok.filter(c => secs(c.answer, c.end) >= 60);
+  const tech = done.filter(c => TECH.includes(outcome(c)));
+  return { calls, done, ok, talk, real, tech, rate: done.length ? Math.round(ok.length / done.length * 100) : null };
+}
+
+/* Status einer Person aus dem heutigen Datensatz ihres Agents */
+function personStatus(ext) {
+  const heute = (st.data.tage || {})[dayKey(new Date())] || {};
+  const d = heute[ext];
+  if (!d || !d.seen) return { s: '', t: 'Agent nicht aktiv' };
+  const alt = (Date.now() - new Date(d.seen)) / 60e3;
+  if (d.live && d.live.length && alt < 6) {
+    const l = d.live[0];
+    return l.answer ? { s: 'live', t: `im Gespräch seit ${hhmm(toDate(l.answer))}` } : { s: 'live', t: 'wählt …' };
+  }
+  if (d.reg && d.reg.status && d.reg.status !== 200 && alt < 25) return { s: 'bad', t: `Telefon nicht angemeldet (SIP ${d.reg.status})` };
+  if (alt < 25) return { s: 'good', t: 'Agent aktiv' };
+  return { s: '', t: `zuletzt ${hhmm(new Date(d.seen))}` };
+}
+
+/* ---------- Darstellung ---------- */
+function render() {
+  if (!st.data) return;
+  renderTeam();
+  const s = stats(fuer(st.who));
+  const uniq = new Set(s.calls.map(c => c.number)).size;
+  $('k-total').textContent = s.calls.length;
+  $('k-total-h').textContent = `${uniq} Nummern`;
+  $('k-ok').textContent = s.ok.length;
+  $('k-ok-h').textContent = `${s.done.length - s.ok.length} nicht erreicht`;
+  $('k-rate').textContent = s.rate == null ? '–' : s.rate + ' %';
+  $('k-talk').textContent = fmtDur(s.talk);
+  $('k-talk-h').textContent = s.ok.length ? `Ø ${fmtDur(s.talk / s.ok.length)} pro Gespräch` : '';
+  $('k-real').textContent = s.real.length;
+  $('k-real-h').textContent = s.ok.length ? `${Math.round(s.real.length / s.ok.length * 100)} % der Gespräche` : '';
+  $('k-tech').textContent = s.tech.length;
+  $('k-tech-h').textContent = s.calls.length ? `${Math.round(s.tech.length / s.calls.length * 100)} % der Versuche` : '';
+  renderChart(s.calls);
+  renderOutcomes(s.done);
+  renderList(s.calls);
+  renderPerNumber(s.calls);
+}
+
+function renderTeam() {
+  const team = st.data.team;
+  const karten = [{ ext: 'team', name: 'Gesamtes Team', nummer: `${team.length} Personen` }, ...team];
+  $('team').innerHTML = karten.map(t => {
+    const s = stats(fuer(t.ext));
+    const ps = t.ext === 'team' ? null : personStatus(t.ext);
+    const liveN = t.ext === 'team' ? team.filter(x => personStatus(x.ext).s === 'live').length : 0;
+    const zeile = ps ? `${dotHtml(ps.s)} ${esc(ps.t)}` : (liveN ? `${dotHtml('live')} ${liveN} am Telefon` : '&nbsp;');
+    return `<button class="card pers" data-who="${t.ext}" aria-pressed="${st.who === t.ext}">
+      <div class="kopf"><span class="nm">${esc(t.name)}</span><span class="sp" style="flex:1"></span><span class="nr">${esc(t.nummer)}</span></div>
+      <div class="st">${zeile}</div>
+      <div class="zahlen">
+        <div class="z"><b>${s.calls.length}</b><span>Versuche</span></div>
+        <div class="z"><b>${s.ok.length}</b><span>erreicht${s.rate == null ? '' : ' · ' + s.rate + ' %'}</span></div>
+        <div class="z"><b>${fmtDur(s.talk)}</b><span>Gespräch</span></div>
+      </div></button>`;
+  }).join('');
+}
+$('team').addEventListener('click', e => {
+  const b = e.target.closest('.pers'); if (!b) return;
+  st.who = b.dataset.who; render();
+});
+
+function buckets(calls) {
+  const n = new Date();
+  if (st.range === 'today' || st.range === 'yesterday') {
+    const b = Array.from({ length: 24 }, (_, h) => ({ label: pad(h), title: `${pad(h)}:00–${pad(h)}:59`, ok: 0, no: 0 }));
+    calls.forEach(c => { if (outcome(c) === 'live') return; const x = b[toDate(c.start).getHours()]; c.answer ? x.ok++ : x.no++; });
+    let lo = 7, hi = 18;
+    b.forEach((x, i) => { if (x.ok + x.no) { lo = Math.min(lo, i); hi = Math.max(hi, i); } });
+    return b.slice(lo, hi + 1);
+  }
+  const { von } = zeitraum(), map = new Map();
+  for (const d = toDate(von + ' 00:00:00'); d <= n; d.setDate(d.getDate() + 1)) {
+    if ((d.getDay() === 0 || d.getDay() === 6)) continue;   // Wochenende ausblenden
+    map.set(dayKey(d), { label: `${pad(d.getDate())}.${pad(d.getMonth()+1)}.`, title: d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' }), ok: 0, no: 0 });
+  }
+  calls.forEach(c => {
+    if (outcome(c) === 'live') return;
+    const k = c.start.slice(0, 10);
+    if (!map.has(k)) { const d = toDate(c.start); map.set(k, { label: `${pad(d.getDate())}.${pad(d.getMonth()+1)}.`, title: d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' }), ok: 0, no: 0 }); }
+    const x = map.get(k); c.answer ? x.ok++ : x.no++;
+  });
+  return [...map.entries()].sort((a, b) => a[0] < b[0] ? -1 : 1).map(e => e[1]);
+}
+function niceMax(v) {
+  if (v <= 4) return 4;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p;
+  return v;
+}
+function barPath(x, y, w, h, roundTop, fill) {
+  if (h <= 0) return '';
+  const r = roundTop ? Math.min(4, h, w / 2) : 0;
+  return `<path d="M${x},${y + h} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h} Z" fill="${fill}"/>`;
+}
+function renderChart(calls) {
+  $('chart-title').textContent = (st.range === 'today' || st.range === 'yesterday') ? 'Wahlversuche pro Stunde' : 'Wahlversuche pro Tag';
+  const svg = $('chart');
+  const W = svg.clientWidth || 600, H = 240, ml = 32, mr = 8, mt = 8, mb = 24;
+  const data = buckets(calls);
+  const max = niceMax(Math.max(1, ...data.map(x => x.ok + x.no)));
+  const iw = W - ml - mr, ih = H - mt - mb;
+  const step = iw / Math.max(1, data.length);
+  const bw = Math.max(4, Math.min(36, step * 0.6));
+  const y = v => mt + ih - v / max * ih;
+  let s = '';
+  const ticks = max % 4 === 0 ? 4 : 5;
+  for (let i = 0; i <= ticks; i++) {
+    const v = max / ticks * i, yy = y(v);
+    s += `<line x1="${ml}" x2="${W - mr}" y1="${yy}" y2="${yy}" stroke="var(${i ? '--line' : '--line-2'})" stroke-width="1"/>`;
+    s += `<text x="${ml - 6}" y="${yy + 4}" text-anchor="end">${Math.round(v * 10) / 10}</text>`;
+  }
+  const labelEvery = Math.ceil(data.length / Math.max(1, Math.floor(iw / 38)));
+  data.forEach((x, i) => {
+    const cx = ml + step * i + step / 2, x0 = cx - bw / 2;
+    const hOk = x.ok / max * ih, hNo = x.no / max * ih;
+    const gap = (x.ok && x.no) ? 2 : 0;
+    if (x.ok) s += barPath(x0, y(0) - hOk, bw, hOk, !x.no, 'var(--s-ok)');
+    if (x.no) s += barPath(x0, y(0) - hOk - hNo, bw, Math.max(0, hNo - gap), true, 'var(--s-no)');
+    if (i % labelEvery === 0) s += `<text x="${cx}" y="${H - 6}" text-anchor="middle">${x.label}</text>`;
+    s += `<rect x="${ml + step * i}" y="${mt}" width="${step}" height="${ih}" fill="transparent" data-i="${i}" class="hit"/>`;
+  });
+  svg.innerHTML = s;
+  const tip = $('tip'), wrap = $('chartwrap');
+  svg.querySelectorAll('.hit').forEach(r => {
+    r.addEventListener('mouseenter', () => r.setAttribute('fill', 'var(--surface-2)'));
+    r.addEventListener('mousemove', e => {
+      const x = data[+r.dataset.i], tot = x.ok + x.no;
+      tip.innerHTML = `<b>${x.title}</b>
+        <div class="r"><i style="background:var(--s-ok)"></i><span>Erreicht</span><span>${x.ok}</span></div>
+        <div class="r"><i style="background:var(--s-no)"></i><span>Nicht erreicht</span><span>${x.no}</span></div>
+        <div class="r"><i></i><span>Quote</span><span>${tot ? Math.round(x.ok / tot * 100) + ' %' : '–'}</span></div>`;
+      tip.style.display = 'block';
+      const b = wrap.getBoundingClientRect();
+      let left = e.clientX - b.left + 12;
+      if (left + tip.offsetWidth > b.width) left = e.clientX - b.left - tip.offsetWidth - 12;
+      tip.style.left = left + 'px'; tip.style.top = Math.max(0, e.clientY - b.top - 20) + 'px';
+    });
+    r.addEventListener('mouseleave', () => { tip.style.display = 'none'; r.setAttribute('fill', 'transparent'); });
+  });
+}
+
+function renderOutcomes(done) {
+  const cnt = {}; done.forEach(c => { const o = outcome(c); cnt[o] = (cnt[o] || 0) + 1; });
+  const rows = ORDER.filter(k => cnt[k]);
+  if (!rows.length) { $('outcomes').innerHTML = '<span class="empty">Keine Versuche im Zeitraum</span>'; return; }
+  const max = Math.max(...rows.map(k => cnt[k]));
+  $('outcomes').innerHTML = rows.map(k => `<div class="b" title="${OUT[k].label}: ${cnt[k]} (${Math.round(cnt[k] / done.length * 100)} %)">
+    <span class="tag">${dotHtml(OUT[k].status)}${OUT[k].label}</span>
+    <div class="track"><div class="fill" style="width:${cnt[k] / max * 100}%${k === 'ok' ? '' : ';background:var(--s-no)'}"></div></div>
+    <span class="n">${cnt[k]}</span></div>`).join('');
+}
+
+const zeitText = c => {
+  const d = toDate(c.start), multi = st.range === '7d' || st.range === '30d';
+  return (multi ? `${pad(d.getDate())}.${pad(d.getMonth()+1)}. ` : '') + `${hhmm(d)}:${pad(d.getSeconds())}`;
+};
+function renderList(calls) {
+  const rows = calls.slice().reverse().slice(0, 300);
+  if (!rows.length) { $('list').innerHTML = '<tr><td colspan="6" class="empty">Keine Versuche im Zeitraum</td></tr>'; return; }
+  $('list').innerHTML = rows.map(c => {
+    const o = outcome(c);
+    const ring = c.ring ? secs(c.ring, c.answer || c.end) : null;
+    const talk = c.answer ? secs(c.answer, c.end) : null;
+    return `<tr><td>${zeitText(c)}</td><td>${esc(name(c.ext))}</td><td class="mono">${c.dir === 'in' ? '↙ ' : ''}${esc(c.number)}</td>
+      <td><span class="tag">${dotHtml(OUT[o].status)}${OUT[o].label}</span></td>
+      <td class="r">${fmtDur(ring)}</td><td class="r">${fmtDur(talk)}</td></tr>`;
+  }).join('');
+}
+function renderPerNumber(calls) {
+  const m = new Map();
+  calls.forEach(c => {
+    const x = m.get(c.number) || { n: 0, ok: 0, last: c.start };
+    x.n++; if (c.answer) x.ok++; if (c.start > x.last) x.last = c.start;
+    m.set(c.number, x);
+  });
+  const rows = [...m.entries()].filter(e => e[1].n > 1).sort((a, b) => b[1].n - a[1].n || (b[1].last > a[1].last ? 1 : -1)).slice(0, 200);
+  if (!rows.length) { $('pernum').innerHTML = '<tr><td colspan="4" class="empty">–</td></tr>'; return; }
+  $('pernum').innerHTML = rows.map(([num, x]) => {
+    const d = toDate(x.last);
+    return `<tr><td class="mono">${esc(num)}</td><td class="r">${x.n}</td><td class="r">${x.ok}</td><td>${pad(d.getDate())}.${pad(d.getMonth()+1)}. ${hhmm(d)}</td></tr>`;
+  }).join('');
+}
+
+/* ---------- CSV für Excel ---------- */
+$('csv').addEventListener('click', () => {
+  const calls = fuer(st.who);
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const kopf = ['Zeit', 'Person', 'Nebenstelle', 'Richtung', 'Nummer', 'Ergebnis', 'Klingeln (s)', 'Gespräch (s)', 'SIP-Code'];
+  const zeilen = calls.map(c => [c.start, name(c.ext), c.ext, c.dir === 'in' ? 'eingehend' : 'ausgehend', c.number, OUT[outcome(c)].label,
+    c.ring ? Math.round(secs(c.ring, c.answer || c.end) || 0) : '', c.answer ? Math.round(secs(c.answer, c.end) || 0) : '', c.code > 0 ? c.code : '']);
+  const txt = '﻿' + [kopf, ...zeilen].map(z => z.map(q).join(';')).join('\r\n');
+  const { von, bis } = zeitraum();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt], { type: 'text/csv;charset=utf-8' }));
+  a.download = `Calltracking ${von}${bis !== von ? ' bis ' + bis : ''}${st.who === 'team' ? '' : ' ' + name(st.who)}.csv`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+
+/* ---------- Umschalter ---------- */
+function bindSeg(id, key, neuLaden) {
+  const set = v => { st[key] = v; $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v)); };
+  try { const v = localStorage.getItem('ct-' + key); if (v && $(id).querySelector(`[data-v="${v}"]`)) set(v); } catch {}
+  $(id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    set(b.dataset.v);
+    try { localStorage.setItem('ct-' + key, st[key]); } catch {}
+    neuLaden ? laden() : render();
+  });
+}
+bindSeg('range', 'range', true); bindSeg('dir', 'dir', false);
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(render, 150); });
+init();
+</script>
+</body>
+</html>
